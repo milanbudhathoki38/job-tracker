@@ -1,10 +1,12 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase-browser";
 
 export default function LoginPage() {
   const supabase = createClient();
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -14,10 +16,14 @@ export default function LoginPage() {
     setMessage(error ? error.message : "Check your email to confirm sign up!");
   }
 
-  async function handleLogin() {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setMessage(error ? error.message : "Logged in!");
+ async function handleLogin() {
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) {
+    setMessage(error.message);
+  } else {
+    router.push("/dashboard");
   }
+}
 
   return (
     <div style={{ maxWidth: "400px", margin: "80px auto", padding: "24px" }}>
