@@ -159,7 +159,7 @@ export default function DashboardPage() {
           <h3 style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "13px", letterSpacing: "0.08em", textTransform: "uppercase", color: "#B8451A", marginTop: 0, marginBottom: "20px" }}>
             Add New Application
           </h3>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
+          <div className="form-grid" style={{ gap: "12px", marginBottom: "12px" }}>
             <input placeholder="Company" value={company} onChange={(e) => setCompany(e.target.value)} style={inputStyle} />
             <input placeholder="Role Title" value={roleTitle} onChange={(e) => setRoleTitle(e.target.value)} style={inputStyle} />
             <input placeholder="Job ID (optional)" value={jobId} onChange={(e) => setJobId(e.target.value)} style={inputStyle} />
