@@ -6,6 +6,21 @@ import { createClient } from "@/lib/supabase-browser";
 
 const STATUSES = ["Applied", "OA", "Interview", "Offer", "Rejected"];
 
+function getDisplayName(user) {
+  if (!user) return "";
+
+  // Google OAuth actually hands over a real name — use it if present.
+  const fullName = user.user_metadata?.full_name || user.user_metadata?.name;
+  if (fullName) return fullName.split(" ")[0];
+
+  // Email/password accounts have no name at all, since signup never asks
+  // for one. Derive something readable from the email's local part instead —
+  // e.g. "milan.budhatho1" -> "Milan".
+  const localPart = user.email?.split("@")[0] || "";
+  const firstChunk = localPart.split(/[._-]/)[0].replace(/[0-9]+$/, "");
+  return firstChunk ? firstChunk.charAt(0).toUpperCase() + firstChunk.slice(1) : "there";
+}
+
 export default function DashboardPage() {
   const supabase = createClient();
   const [user, setUser] = useState(null);
@@ -216,9 +231,14 @@ export default function DashboardPage() {
       <div style={{ maxWidth: "760px", margin: "0 auto", padding: "48px 24px" }}>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "40px" }}>
-          <h1 style={{ fontFamily: "'Zilla Slab', serif", fontSize: "36px", color: "#1B2430", margin: 0 }}>
-            Your Applications
-          </h1>
+                    <div>
+            <h1 style={{ fontFamily: "'Zilla Slab', serif", fontSize: "36px", color: "#1B2430", margin: 0 }}>
+              Welcome, {getDisplayName(user)}
+            </h1>
+            <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "12px", letterSpacing: "0.05em", textTransform: "uppercase", color: "#9c9384", margin: "4px 0 0 0" }}>
+              Your Applications
+            </p>
+          </div>
           <button onClick={handleLogout} style={secondaryBtnStyle}>
             Log Out
           </button>
@@ -342,11 +362,11 @@ export default function DashboardPage() {
                     </a>
                   )}
 
-                  {app.notes && (
-                    <p style={{ fontSize: "13px", color: "#5B5346", marginTop: 0, marginBottom: "12px", whiteSpace: "pre-wrap" }}>
-                      {app.notes}
-                    </p>
-                  )}
+                 {app.notes && (
+  <p style={{ fontSize: "13px", color: "#5B5346", marginTop: 0, marginBottom: "12px", whiteSpace: "pre-wrap" }}>
+    <strong>Note:</strong> {app.notes}
+  </p>
+)}
 
                   {app.job_description && (
                     <div style={{ marginBottom: "12px" }}>
@@ -394,61 +414,75 @@ export default function DashboardPage() {
 
 function AnalysisCard({ analysis }) {
   const { matchScore, strengths = [], gaps = [], tailoringTip } = analysis;
+  const [expanded, setExpanded] = useState(true);
 
   return (
     <div style={{ background: "#F7F4EC", border: "1px solid #D8D2C2", borderRadius: "8px", padding: "14px 16px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
-        <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "11px", letterSpacing: "0.05em", textTransform: "uppercase", color: "#6B7A5E" }}>
-          AI Fit Analysis
-        </span>
-        {typeof matchScore === "number" && (
-          <span
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "11px",
-              fontWeight: 700,
-              color: "#B8451A",
-              border: "1px solid #B8451A",
-              borderRadius: "999px",
-              padding: "2px 10px",
-            }}
-          >
-            {matchScore}/10
+      <div
+        onClick={() => setExpanded((e) => !e)}
+        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", marginBottom: expanded ? "10px" : 0 }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "11px", letterSpacing: "0.05em", textTransform: "uppercase", color: "#6B7A5E" }}>
+            AI Fit Analysis
           </span>
-        )}
+          {typeof matchScore === "number" && (
+            <span
+              style={{
+                fontFamily: "'IBM Plex Mono', monospace",
+                fontSize: "11px",
+                fontWeight: 700,
+                color: "#B8451A",
+                border: "1px solid #B8451A",
+                borderRadius: "999px",
+                padding: "2px 10px",
+              }}
+            >
+              {matchScore}/10
+            </span>
+          )}
+        </div>
+        <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "11px", color: "#9c9384" }}>
+          {expanded ? "Hide ▲" : "Show ▼"}
+        </span>
       </div>
 
-      {strengths.length > 0 && (
-        <div style={{ marginBottom: "8px" }}>
-          <div style={{ fontSize: "12px", fontWeight: 600, color: "#1B2430", marginBottom: "4px" }}>Strengths</div>
-          <ul style={{ margin: 0, paddingLeft: "18px" }}>
-            {strengths.map((s, i) => (
-              <li key={i} style={{ fontSize: "13px", color: "#5B5346", marginBottom: "2px" }}>{s}</li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {expanded && (
+        <>
+          {strengths.length > 0 && (
+            <div style={{ marginBottom: "8px" }}>
+              <div style={{ fontSize: "12px", fontWeight: 600, color: "#1B2430", marginBottom: "4px" }}>Strengths</div>
+              <ul style={{ margin: 0, paddingLeft: "18px" }}>
+                {strengths.map((s, i) => (
+                  <li key={i} style={{ fontSize: "13px", color: "#5B5346", marginBottom: "2px" }}>{s}</li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-      {gaps.length > 0 && (
-        <div style={{ marginBottom: "8px" }}>
-          <div style={{ fontSize: "12px", fontWeight: 600, color: "#1B2430", marginBottom: "4px" }}>Gaps</div>
-          <ul style={{ margin: 0, paddingLeft: "18px" }}>
-            {gaps.map((g, i) => (
-              <li key={i} style={{ fontSize: "13px", color: "#5B5346", marginBottom: "2px" }}>{g}</li>
-            ))}
-          </ul>
-        </div>
-      )}
+          {gaps.length > 0 && (
+            <div style={{ marginBottom: "8px" }}>
+              <div style={{ fontSize: "12px", fontWeight: 600, color: "#1B2430", marginBottom: "4px" }}>Gaps</div>
+              <ul style={{ margin: 0, paddingLeft: "18px" }}>
+                {gaps.map((g, i) => (
+                  <li key={i} style={{ fontSize: "13px", color: "#5B5346", marginBottom: "2px" }}>{g}</li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-      {tailoringTip && (
-        <div>
-          <div style={{ fontSize: "12px", fontWeight: 600, color: "#1B2430", marginBottom: "4px" }}>Resume Tip</div>
-          <p style={{ fontSize: "13px", color: "#5B5346", margin: 0, fontStyle: "italic" }}>{tailoringTip}</p>
-        </div>
+          {tailoringTip && (
+            <div>
+              <div style={{ fontSize: "12px", fontWeight: 600, color: "#1B2430", marginBottom: "4px" }}>Resume Tip</div>
+              <p style={{ fontSize: "13px", color: "#5B5346", margin: 0, fontStyle: "italic" }}>{tailoringTip}</p>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
 }
+
 
 const inputStyle = {
   border: "1px solid #D8D2C2",
