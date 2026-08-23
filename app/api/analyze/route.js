@@ -1,9 +1,13 @@
-// Stage 2: full structured analysis — matches the {matchScore, strengths,
-// gaps, tailoringTip} shape the dashboard UI already expects.
+// Full structured analysis, now with:
+// - A real auth check (route previously had none at all)
+// - Rate limiting: max 10 analyses per user per rolling hour
 
-const MAX_JD_LENGTH = 6000; // guard against someone pasting an entire posting w/ boilerplate
+import { createServerSupabaseClient } from "@/lib/supabase-server";
 
-// Keep this in sync with your resume as it evolves.
+const MAX_JD_LENGTH = 6000;
+const RATE_LIMIT = 10; // requests
+const RATE_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
 const PROFILE = `
 CS major (Math minor), Arkansas State University, expected Dec 2028, on F1 visa status (CPT-eligible now, OPT after graduation).
 Languages: Python, C++, JavaScript.
@@ -19,6 +23,42 @@ const SYSTEM_PROMPT = `You are a blunt, practical internship-fit reviewer for a 
 {"matchScore": <integer 1-10>, "strengths": [<2-4 short strings, each a real specific overlap between the posting and the student's actual projects/skills>], "gaps": [<1-3 short strings, real gaps or unknowns relative to the posting>], "tailoringTip": "<one concrete sentence on what to emphasize for THIS posting specifically>"}`;
 
 export async function POST(request) {
+  // --- Step A: who is actually calling this? ---
+  const supabase = await createServerSupabaseClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return Response.json({ error: "You must be logged in to use this." }, { status: 401 });
+  }
+
+  // --- Step B: count backward — how many times has THIS user
+  //     signed in to this route in the last hour? ---
+  const windowStart = new Date(Date.now() - RATE_WINDOW_MS).toISOString();
+
+const { data: recentRequests, error: countError } = await supabase
+  .from("analyze_requests")
+  .select("id")
+  .eq("user_id", user.id)
+  .gte("created_at", windowStart);
+
+console.log("Authenticated user id:", user.id);
+console.log("Rate limit window start:", windowStart);
+
+if (countError) {
+  console.error("Rate limit check failed. Full error object:");
+  console.error(countError);
+  return Response.json({ error: "Server error" }, { status: 500 });
+}
+
+const count = recentRequests.length;
+  if (count >= RATE_LIMIT) {
+    return Response.json(
+      { error: `You've hit the limit of ${RATE_LIMIT} analyses per hour. Try again later.` },
+      { status: 429 }
+    );
+  }
+
+  // --- Parse the actual request body ---
   let body;
   try {
     body = await request.json();
@@ -35,6 +75,10 @@ export async function POST(request) {
   if (!process.env.ANTHROPIC_API_KEY) {
     return Response.json({ error: "Server is missing ANTHROPIC_API_KEY" }, { status: 500 });
   }
+
+  // --- Step C: write to the sign-in sheet BEFORE the expensive call,
+  //     so it counts even if the Anthropic call fails partway. ---
+  await supabase.from("analyze_requests").insert({ user_id: user.id });
 
   const trimmedJD = jobDescription.slice(0, MAX_JD_LENGTH);
 
