@@ -13,8 +13,9 @@ CS major (Math minor), Arkansas State University, expected Dec 2028, on F1 visa 
 Languages: Python, C++, JavaScript.
 Backend/infra-leaning full-stack projects:
 - Personal portfolio (Next.js, Supabase, Redis/Upstash, Anthropic Claude API): live AI chat feature with server-side request routing and prompt design; Redis caching layer cutting repeat-request latency ~4x; Supabase backend with Resend email, including diagnosing and fixing a Row-Level Security misconfiguration.
-- Job application tracker (Next.js, Supabase Auth incl. Google OAuth): full-stack CRUD app with authentication, protected routes, and Row-Level Security policies enforcing per-user data isolation; custom SMTP email delivery workflow with Resend.
-Actively practicing data structures & algorithms (LeetCode - arrays, hashing, linked lists, two pointers) and object-oriented Python.
+- Job application tracker (Next.js, Supabase Auth incl. Google OAuth): full-stack CRUD app with authentication, protected routes, and Row-Level Security policies enforcing per-user data isolation; custom SMTP email delivery workflow with Resend. CI pipeline built with GitHub Actions that automatically builds and validates the app on every push (using GitHub Secrets for environment variables), paired with Vercel's continuous deployment for automatic production releases.
+- Sentiment analysis project: trained and compared scikit-learn and TensorFlow classifiers on a 100,000-tweet subset of a 1.6 million-tweet Kaggle dataset, with visualized performance comparison.
+Actively practicing data structures & algorithms (LeetCode - arrays, hashing, linked lists, trees, stacks/queues, two pointers, currently moving into graphs) and object-oriented Python.
 Experience: Math/Stats tutor at Arkansas State; IT support intern at Lyon College (hardware/network troubleshooting, workstation deployment).
 No prior formal software engineering internship yet.
 `.trim();
