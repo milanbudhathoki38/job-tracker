@@ -16,6 +16,10 @@ Built this because I was tracking applications in a random notes file with no re
 - **AI fit analysis** — paste a job description in, get a match score, strengths, gaps, and a tailoring tip back, powered by the Anthropic Claude API
 - **Rate limiting** — server-side, per-user (10 requests/hour, sliding window), backed by a Postgres table logging every request; protects against abuse and runaway API costs. Debugged a real two-layer Postgres permissions bug along the way, missing RLS SELECT policy, then a missing table-level GRANT — both required to actually read the log table back
 
+## CI/CD
+
+This project uses GitHub Actions to automatically build and validate the app on every push to `main`. The workflow installs dependencies and runs a production build, using secrets stored in GitHub Secrets for environment variables. Successful builds are automatically deployed to production via Vercel's continuous deployment integration.
+
 ### In progress
 - **reCAPTCHA v3** — bot protection on signup/login
 
