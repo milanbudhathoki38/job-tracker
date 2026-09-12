@@ -74,10 +74,10 @@ export default function DashboardPage() {
   async function handleAddApplication() {
     if (!company || !roleTitle) return;
 
-    const { data, error } = await supabase
-      .from("applications")
-      .insert({
-        user_id: user.id,
+    const res = await fetch("/api/applications", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         company,
         role_title: roleTitle,
         job_id: jobId || null,
@@ -85,11 +85,12 @@ export default function DashboardPage() {
         posting_url: postingUrl || null,
         notes: notes || null,
         job_description: jobDescription || null,
-      })
-      .select();
+      }),
+    });
 
-    if (!error) {
-      setApplications([data[0], ...applications]);
+    if (res.ok) {
+      const newApp = await res.json();
+      setApplications([newApp, ...applications]);
       setCompany("");
       setRoleTitle("");
       setJobId("");
@@ -98,7 +99,8 @@ export default function DashboardPage() {
       setNotes("");
       setJobDescription("");
     } else {
-      alert(error.message);
+      const { error } = await res.json();
+      alert(error);
     }
   }
 
@@ -106,21 +108,21 @@ export default function DashboardPage() {
     await supabase.auth.signOut();
     router.push("/login");
   }
+async function handleStatusChange(id, newStatus) {
+  const res = await fetch(`/api/applications/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status: newStatus }),
+  });
 
-  async function handleStatusChange(id, newStatus) {
-    const { error } = await supabase
-      .from("applications")
-      .update({ status: newStatus })
-      .eq("id", id);
-
-    if (!error) {
-      setApplications(
-        applications.map((app) =>
-          app.id === id ? { ...app, status: newStatus } : app
-        )
-      );
-    }
+  if (res.ok) {
+    setApplications(
+      applications.map((app) =>
+        app.id === id ? { ...app, status: newStatus } : app
+      )
+    );
   }
+}
 
   function startEditing(app) {
     setEditingId(app.id);
@@ -134,48 +136,40 @@ export default function DashboardPage() {
   }
 
   async function handleSaveEdit(id) {
-    const { error } = await supabase
-      .from("applications")
-      .update({
-        company: editCompany,
-        role_title: editRoleTitle,
-        job_id: editJobId || null,
-        location: editLocation || null,
-        posting_url: editPostingUrl || null,
-        notes: editNotes || null,
-        job_description: editJobDescription || null,
-      })
-      .eq("id", id);
+  const res = await fetch(`/api/applications/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      company: editCompany,
+      role_title: editRoleTitle,
+      job_id: editJobId || null,
+      location: editLocation || null,
+      posting_url: editPostingUrl || null,
+      notes: editNotes || null,
+      job_description: editJobDescription || null,
+    }),
+  });
 
-    if (!error) {
-      setApplications(
-        applications.map((app) =>
-          app.id === id
-            ? {
-                ...app,
-                company: editCompany,
-                role_title: editRoleTitle,
-                job_id: editJobId || null,
-                location: editLocation || null,
-                posting_url: editPostingUrl || null,
-                notes: editNotes || null,
-                job_description: editJobDescription || null,
-              }
-            : app
-        )
-      );
-      setEditingId(null);
-    } else {
-      alert(error.message);
-    }
+  if (res.ok) {
+    setApplications(
+      applications.map((app) =>
+        app.id === id
+          ? { ...app, company: editCompany, role_title: editRoleTitle, job_id: editJobId || null, location: editLocation || null, posting_url: editPostingUrl || null, notes: editNotes || null, job_description: editJobDescription || null }
+          : app
+      )
+    );
   }
+}
 
   async function handleDelete(id) {
-    const { error } = await supabase.from("applications").delete().eq("id", id);
-    if (!error) {
-      setApplications(applications.filter((app) => app.id !== id));
-    }
+  const res = await fetch(`/api/applications/${id}`, {
+    method: "DELETE",
+  });
+
+  if (res.ok) {
+    setApplications(applications.filter((app) => app.id !== id));
   }
+}
 
   async function handleAnalyze(app) {
     if (!app.job_description || !app.job_description.trim()) return;
