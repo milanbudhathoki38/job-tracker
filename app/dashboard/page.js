@@ -46,6 +46,7 @@ export default function DashboardPage() {
   const [editJobDescription, setEditJobDescription] = useState("");
 
   const [statusFilter, setStatusFilter] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
   const [analyzingId, setAnalyzingId] = useState(null);
 
   useEffect(() => {
@@ -217,11 +218,12 @@ export default function DashboardPage() {
     }
   }
 
-  const filteredApplications =
-  statusFilter === "All"
-    ? applications
-    : applications.filter((app) => app.status === statusFilter);
 
+const filteredApplications = applications
+  .filter((app) => statusFilter === "All" || app.status === statusFilter)
+  .filter((app) =>
+    app.company.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   if (loading) return <p style={{ padding: "40px", fontFamily: "Inter, sans-serif" }}>Loading...</p>;
   if (!user) return null;
@@ -286,6 +288,13 @@ export default function DashboardPage() {
             </button>
           ))}
         </div>
+
+        <input
+  placeholder="Search by company..."
+  value={searchQuery}
+  onChange={(e) => setSearchQuery(e.target.value)}
+  style={{ ...inputStyle, width: "100%", marginBottom: "20px" }}
+/>
 
         <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "13px", letterSpacing: "0.05em", textTransform: "uppercase", color: "#6B7A5E", marginBottom: "16px" }}>
           {filteredApplications.length} {filteredApplications.length === 1 ? "Application" : "Applications"}
