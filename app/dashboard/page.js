@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase-browser";
+import Link from "next/link";
 
 const STATUSES = ["Applied", "OA", "Interview", "Offer", "Rejected"];
 
@@ -235,9 +236,14 @@ const filteredApplications = applications
               Your Applications
             </p>
           </div>
-          <button onClick={handleLogout} style={secondaryBtnStyle}>
-            Log Out
-          </button>
+                    <div style={{ display: "flex", gap: "8px" }}>
+            <Link href="/dashboard/analytics">
+              <button style={secondaryBtnStyle}>Analytics</button>
+            </Link>
+            <button onClick={handleLogout} style={secondaryBtnStyle}>
+              Log Out
+            </button>
+          </div>
         </div>
 
         <div style={{ background: "#ffffff", border: "1px solid #D8D2C2", borderRadius: "10px", padding: "28px", marginBottom: "40px" }}>
