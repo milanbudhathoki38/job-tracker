@@ -9,16 +9,24 @@ Built this because I was tracking applications in a random notes file with no re
 ## Features
 
 - **Authentication** — email/password and Google OAuth sign-in via Supabase Auth
-- **Full CRUD** — add, edit, delete, and update the status of every application
+- **RESTful API layer** — full CRUD (GET/POST/PUT/DELETE) built as proper Next.js API routes with server-side auth checks and per-user data isolation, instead of the frontend talking to Supabase directly
 - **Row-Level Security** — Postgres RLS policies enforce that each user can only ever see their own data, at the database level, not just in the UI
 - **Status pipeline** — Applied → OA → Interview → Offer → Rejected, with filterable views
+- **Search** — instant client-side search by company name, with a clear button
+- **Analytics dashboard** — visual breakdown of applications by status
 - **Custom email delivery** — account verification through a self-configured SMTP workflow (Resend), including debugging a permissions issue separate from RLS
 - **AI fit analysis** — paste a job description in, get a match score, strengths, gaps, and a tailoring tip back, powered by the Anthropic Claude API
 - **Rate limiting** — server-side, per-user (10 requests/hour, sliding window), backed by a Postgres table logging every request; protects against abuse and runaway API costs. Debugged a real two-layer Postgres permissions bug along the way, missing RLS SELECT policy, then a missing table-level GRANT — both required to actually read the log table back
+- **Automated testing** — Vitest test suite covering the API layer, run automatically in CI
 
 ## CI/CD
 
-This project uses GitHub Actions to automatically build and validate the app on every push to `main`. The workflow installs dependencies and runs a production build, using secrets stored in GitHub Secrets for environment variables. Successful builds are automatically deployed to production via Vercel's continuous deployment integration.
+GitHub Actions runs on every push to `main`:
+1. Installs dependencies and runs a production build
+2. Starts the built app and runs the automated test suite against it
+3. Only if both pass, a second job deploys to production via the Vercel CLI
+
+Deployment is gated on tests passing — Vercel's own auto-deploy is disabled (`vercel.json`), so broken code can't reach production even if it builds successfully.
 
 ### In progress
 - **reCAPTCHA v3** — bot protection on signup/login
@@ -29,6 +37,7 @@ This project uses GitHub Actions to automatically build and validate the app on 
 - Supabase (Auth + PostgreSQL + Row-Level Security)
 - Resend (transactional email)
 - Anthropic Claude API (AI fit analysis)
+- Vitest (automated testing)
 - Deployed on Vercel
 
 ## Getting Started
