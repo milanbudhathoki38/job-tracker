@@ -289,12 +289,32 @@ const filteredApplications = applications
           ))}
         </div>
 
-        <input
-  placeholder="Search by company..."
-  value={searchQuery}
-  onChange={(e) => setSearchQuery(e.target.value)}
-  style={{ ...inputStyle, width: "100%", marginBottom: "20px" }}
-/>
+ <div style={{ position: "relative", marginBottom: "20px" }}>
+  <input
+    placeholder="Search by company..."
+    value={searchQuery}
+    onChange={(e) => setSearchQuery(e.target.value)}
+    style={{ ...inputStyle, width: "100%" }}
+  />
+  {searchQuery && (
+    <button
+      onClick={() => setSearchQuery("")}
+      style={{
+        position: "absolute",
+        right: "10px",
+        top: "50%",
+        transform: "translateY(-50%)",
+        background: "none",
+        border: "none",
+        cursor: "pointer",
+        color: "#9c9384",
+        fontSize: "16px",
+      }}
+    >
+      ✕
+    </button>
+  )}
+</div>
 
         <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "13px", letterSpacing: "0.05em", textTransform: "uppercase", color: "#6B7A5E", marginBottom: "16px" }}>
           {filteredApplications.length} {filteredApplications.length === 1 ? "Application" : "Applications"}
