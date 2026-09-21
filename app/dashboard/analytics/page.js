@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts";
 
@@ -20,6 +21,9 @@ export default function AnalyticsPage() {
 
   return (
     <div style={{ padding: "40px" }}>
+      <Link href="/dashboard" style={{ color: "#B8451A", textDecoration: "none", fontFamily: "'IBM Plex Mono', monospace", fontSize: "13px" }}>
+        ← Back to Dashboard
+      </Link>
       <h1>Application Funnel</h1>
       <ResponsiveContainer width="100%" height={400}>
         <BarChart data={chartData}>
