@@ -30,6 +30,7 @@ Deployment is gated on tests passing — Vercel's own auto-deploy is disabled (`
 
 ### In progress
 - **reCAPTCHA v3** — bot protection on signup/login
+- **Postgres indexing** — added index on `company` column for faster search as data grows
 
 ## Tech Stack
 
