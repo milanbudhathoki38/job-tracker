@@ -22,6 +22,13 @@ function getDisplayName(user) {
   return firstChunk ? firstChunk.charAt(0).toUpperCase() + firstChunk.slice(1) : "there";
 }
 
+function isStale(app) {
+  if (app.status !== "Applied") return false;
+  const daysSinceApplied = (Date.now() - new Date(app.created_at)) / (1000 * 60 * 60 * 24);
+  return daysSinceApplied >= 21;
+}
+
+
 export default function DashboardPage() {
   const supabase = createClient();
   const [user, setUser] = useState(null);
@@ -345,7 +352,25 @@ const filteredApplications = applications
                 <>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "12px" }}>
                     <div>
-                      <div style={{ fontSize: "17px", fontWeight: 600, color: "#1B2430" }}>{app.company}</div>
+                     
+                                          <div style={{ fontSize: "17px", fontWeight: 600, color: "#1B2430" }}>
+                        {app.company}
+                        {isStale(app) && (
+                          <span style={{
+                            background: "#FBEEE7",
+                            color: "#B8451A",
+                            border: "1px solid #B8451A",
+                            borderRadius: "4px",
+                            padding: "2px 8px",
+                            fontSize: "11px",
+                            fontFamily: "'IBM Plex Mono', monospace",
+                            marginLeft: "8px",
+                          }}>
+                            Follow up
+                          </span>
+                        )}
+                      </div>
+
                       <div style={{ fontSize: "14px", color: "#6b6355" }}>{app.role_title}</div>
                       {(app.location || app.job_id) && (
                         <div style={{ fontSize: "12px", color: "#9c9384", marginTop: "4px" }}>
