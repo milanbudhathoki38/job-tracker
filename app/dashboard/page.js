@@ -5,29 +5,8 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase-browser";
 import Link from "next/link";
 
-const STATUSES = ["Applied", "OA", "Interview", "Offer", "Rejected"];
 
-function getDisplayName(user) {
-  if (!user) return "";
-
-  // Google OAuth actually hands over a real name — use it if present.
-  const fullName = user.user_metadata?.full_name || user.user_metadata?.name;
-  if (fullName) return fullName.split(" ")[0];
-
-  // Email/password accounts have no name at all, since signup never asks
-  // for one. Derive something readable from the email's local part instead —
-  // e.g. "milan.budhatho1" -> "Milan".
-  const localPart = user.email?.split("@")[0] || "";
-  const firstChunk = localPart.split(/[._-]/)[0].replace(/[0-9]+$/, "");
-  return firstChunk ? firstChunk.charAt(0).toUpperCase() + firstChunk.slice(1) : "there";
-}
-
-function isStale(app) {
-  if (app.status !== "Applied") return false;
-  const daysSinceApplied = (Date.now() - new Date(app.created_at)) / (1000 * 60 * 60 * 24);
-  return daysSinceApplied >= 21;
-}
-
+import { getDisplayName, isStale, STATUSES } from "@/lib/dashboard-utils";
 
 export default function DashboardPage() {
   const supabase = createClient();
