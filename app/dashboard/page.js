@@ -122,6 +122,7 @@ async function handleStatusChange(id, newStatus) {
     setEditJobDescription(app.job_description || "");
   }
 
+ 
   async function handleSaveEdit(id) {
   const res = await fetch(`/api/applications/${id}`, {
     method: "PUT",
@@ -145,8 +146,14 @@ async function handleStatusChange(id, newStatus) {
           : app
       )
     );
+     setEditingId(null);
+  } else {
+    const { error } = await res.json();
+    alert(error || "Save failed. Check the console for details.");
+    console.error("Save edit failed:", error);
   }
 }
+
 
   async function handleDelete(id) {
   const res = await fetch(`/api/applications/${id}`, {
