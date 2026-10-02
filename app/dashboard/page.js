@@ -166,11 +166,12 @@ async function handleStatusChange(id, newStatus) {
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jobDescription: app.job_description,
-          roleTitle: app.role_title,
-          company: app.company,
-        }),
+       body: JSON.stringify({
+  jobDescription: app.job_description,
+  roleTitle: app.role_title,
+  company: app.company,
+  forceRefresh: Boolean(app.ai_analysis),
+}),
       });
 
       const result = await res.json();

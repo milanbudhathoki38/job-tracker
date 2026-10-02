@@ -1,8 +1,5 @@
-// Full structured analysis, now with:
-// - A real auth check (route previously had none at all)
-// - Rate limiting: max 10 analyses per user per rolling hour
-
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { redis } from "@/lib/redis";
 import {
   RATE_LIMIT,
   RATE_WINDOW_MS,
@@ -10,6 +7,8 @@ import {
   isValidJobDescription,
   truncateJobDescription,
   parseAnalysisResponse,
+  getAnalysisCacheKey,
+  CACHE_TTL_SECONDS,
 } from "@/lib/analyze-utils";
 
 const PROFILE = `
@@ -35,6 +34,29 @@ export async function POST(request) {
     return Response.json({ error: "You must be logged in to use this." }, { status: 401 });
   }
 
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
+    const { jobDescription, roleTitle, company, forceRefresh } = body || {};
+
+  if (!isValidJobDescription(jobDescription)) {
+    return Response.json({ error: "Job description is required" }, { status: 400 });
+  }
+
+  const trimmedJD = truncateJobDescription(jobDescription);
+  const cacheKey = getAnalysisCacheKey(roleTitle, company, trimmedJD);
+
+  if (!forceRefresh) {
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      return Response.json(cached);
+    }
+  }
+
   const windowStart = new Date(Date.now() - RATE_WINDOW_MS).toISOString();
 
   const { data: recentRequests, error: countError } = await supabase
@@ -43,12 +65,8 @@ export async function POST(request) {
     .eq("user_id", user.id)
     .gte("created_at", windowStart);
 
-  console.log("Authenticated user id:", user.id);
-  console.log("Rate limit window start:", windowStart);
-
   if (countError) {
-    console.error("Rate limit check failed. Full error object:");
-    console.error(countError);
+    console.error("Rate limit check failed:", countError);
     return Response.json({ error: "Server error" }, { status: 500 });
   }
 
@@ -60,26 +78,11 @@ export async function POST(request) {
     );
   }
 
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: "Invalid request body" }, { status: 400 });
-  }
-
-  const { jobDescription, roleTitle, company } = body || {};
-
-  if (!isValidJobDescription(jobDescription)) {
-    return Response.json({ error: "Job description is required" }, { status: 400 });
-  }
-
   if (!process.env.ANTHROPIC_API_KEY) {
     return Response.json({ error: "Server is missing ANTHROPIC_API_KEY" }, { status: 500 });
   }
 
   await supabase.from("analyze_requests").insert({ user_id: user.id });
-
-  const trimmedJD = truncateJobDescription(jobDescription);
 
   const userContent = `Role: ${roleTitle || "Unknown role"} at ${company || "Unknown company"}
 
@@ -122,6 +125,8 @@ ${PROFILE}`;
       console.error("Could not parse model output as JSON:", raw);
       return Response.json({ error: "Could not parse analysis" }, { status: 502 });
     }
+
+    await redis.set(cacheKey, parsed, { ex: CACHE_TTL_SECONDS });
 
     return Response.json(parsed);
   } catch (err) {
